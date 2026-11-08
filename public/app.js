@@ -67,6 +67,7 @@ const T = {
     err_supplier: 'اكتب اسم المورد', err_price: 'اكتب سعرًا صحيحًا', err_fileType: 'صورة أو PDF فقط', err_net: 'تعذر الاتصال بالخادم',
     tab_wd: 'طلبات الصرف', sk_byProj: 'أصناف المشروعات', sk_general: 'المخزن العام', sk_generalSub: 'كل الأصناف بأرصدتها، والصنف الخاص بمشروع مكتوب بجواره اسم المشروع.',
     br_cairo: 'فرع القاهرة', br_alex: 'فرع الإسكندرية', br_all: 'كل الفروع', branch: 'الفرع', chooseBranch: 'اختر الفرع', branchView: 'الفرع',
+    mustChange: 'لحماية النظام: غيّر كلمة المرور الافتراضية الآن. بعد التغيير تظهر كل صفحات النظام.',
     restartWarn: 'السيرفر يعمل بنسخة قديمة. اقفل نافذة السيرفر وشغّل start.bat من جديد حتى تعمل آخر التعديلات.', sk_unitPh: 'مثال: قطعة', sk_unitBad: 'راجع الوحدة', sk_unitHint: 'الوحدة كلمة (قطعة، كرتونة…) والكمية في خانة الرصيد.', sk_edit: 'تعديل',
     sk_generalSubNo: 'قائمة الأصناف الموجودة بالمخزن. الأرصدة تظهر لإدارة المخازن فقط.', sk_code: 'الكود', sk_barcode: 'الباركود', sk_balance: 'الرصيد', sk_gen: 'عام', sk_search: 'ابحث بالاسم أو الكود أو امسح الباركود…', sk_showZero: 'إظهار الأصناف المنتهية',
     sk_addProd: 'إضافة صنف للمخزن العام', sk_add: 'إضافة كمية', sk_none: 'لا توجد أصناف مطابقة', sk_genEmpty: 'المخزن العام فارغ',
@@ -149,6 +150,7 @@ const T = {
     err_supplier: 'Enter the supplier name', err_price: 'Enter a valid price', err_fileType: 'Images or PDF only', err_net: 'Could not reach the server',
     tab_wd: 'Withdrawals', sk_byProj: 'Project items', sk_general: 'General stock', sk_generalSub: 'Every item with its balance; project items show the project name.',
     br_cairo: 'Cairo branch', br_alex: 'Alexandria branch', br_all: 'All branches', branch: 'Branch', chooseBranch: 'Choose a branch', branchView: 'Branch',
+    mustChange: 'To protect the system, change the default password now. All pages appear after you change it.',
     restartWarn: 'The server is running an old version. Close the server window and run start.bat again to apply the latest changes.', sk_unitPh: 'e.g. piece', sk_unitBad: 'Check unit', sk_unitHint: 'The unit is a word (piece, carton…); the quantity goes in the balance field.', sk_edit: 'Edit',
     sk_generalSubNo: 'Items available in stock. Balances are shown to Stores only.', sk_code: 'Code', sk_barcode: 'Barcode', sk_balance: 'Balance', sk_gen: 'General', sk_search: 'Search by name or code, or scan a barcode…', sk_showZero: 'Show depleted items',
     sk_addProd: 'Add item to general stock', sk_add: 'Add quantity', sk_none: 'No matching items', sk_genEmpty: 'General stock is empty',
@@ -186,11 +188,11 @@ const SERVER_EN = {
   'حجم الطلب كبير جدًا': 'Request too large', 'المشروع غير موجود': 'Project not found',
   'اكتب اسم الصنف والوحدة والرصيد': 'Enter the item name, unit and balance', 'الصنف غير موجود': 'Item not found',
   'أصناف المشروعات تدخل المخزن من دورة المشروع فقط': 'Project items enter stock only through the project cycle',
-  'أضف صنفًا واحدًا على الأقل': 'Add at least one item', 'اختر الفرع': 'Choose a branch', 'تستطيع إضافة موظفين لفرعك فقط': 'You can only add employees to your own branch', 'الوحدة تُكتب كلمة مثل قطعة أو كرتونة، والكمية تُكتب في خانة الرصيد': 'The unit must be a word such as piece or carton; the quantity goes in the balance field', 'الكمية المطلوبة غير متاحة بالمخزن: ': 'Requested quantity not available: ', 'الطلب غير موجود': 'Request not found', 'إجراء غير معروف': 'Unknown action',
+  'أضف صنفًا واحدًا على الأقل': 'Add at least one item', 'غيّر كلمة المرور الافتراضية أولًا من صفحة حسابي': 'Change the default password first under My account', 'اختر كلمة مرور مختلفة عن الحالية': 'Choose a password different from the current one', 'محاولات دخول خاطئة كثيرة. حاول مرة أخرى بعد 15 دقيقة': 'Too many failed sign-in attempts. Try again in 15 minutes', 'اختر الفرع': 'Choose a branch', 'تستطيع إضافة موظفين لفرعك فقط': 'You can only add employees to your own branch', 'الوحدة تُكتب كلمة مثل قطعة أو كرتونة، والكمية تُكتب في خانة الرصيد': 'The unit must be a word such as piece or carton; the quantity goes in the balance field', 'الكمية المطلوبة غير متاحة بالمخزن: ': 'Requested quantity not available: ', 'الطلب غير موجود': 'Request not found', 'إجراء غير معروف': 'Unknown action',
 };
 
 // ---------------- state ----------------
-const APP_VERSION = '2026-11-08.4';
+const APP_VERSION = '2026-11-08.6';
 const BRANCHES = ['cairo', 'alex']; // must match server.js
 const DEPTS = ['tech', 'exec', 'purch', 'store', 'acc', 'eng', 'chair', 'it'];
 const STAGES = {
@@ -347,6 +349,7 @@ function loginView() {
 
 function tabsFor() {
   const u = S.user, d = viewDept(), tabs = [];
+  if (u.mustChange) return ['account'];
   if (d !== 'it') tabs.push('inbox');
   tabs.push('track');
   if (u.isAdmin || u.dept === 'tech') tabs.push('new');
@@ -374,6 +377,7 @@ function shell() {
         <button class="btn sm" data-act="logout">${t('logout')}</button></div>
     </div></header>
     <nav class="tabs"><div class="tabs-in">${tabs.map(k => `<button class="tab ${S.tab === k ? 'on' : ''}" data-act="tab" data-v="${k}">${k === 'new' && S.editId ? t('editTitle') : t('tab_' + k)}${k === 'inbox' && n ? `<span class="count">${fmtN(n)}</span>` : ''}${k === 'wd' && wn ? `<span class="count">${fmtN(wn)}</span>` : ''}</button>`).join('')}</div></nav>
+    ${S.user.mustChange ? `<div class="restart-warn">${t('mustChange')}</div>` : ''}
     ${S.serverVersion !== APP_VERSION ? `<div class="restart-warn">${t('restartWarn')}</div>` : ''}
     <main>${({ inbox: inboxView, track: trackView, new: newView, stock: stockView, wd: wdView, staff: staffView, account: accountView })[S.tab]()}</main>`;
 }
@@ -710,7 +714,7 @@ document.addEventListener('submit', e => {
   if (form === 'user') run(async () => {
     await api('POST', '/api/users', S.uf); S.uf = { dept: S.uf.dept, branch: S.uf.branch }; await refresh(); toast(t('added'));
   });
-  if (form === 'pw') run(async () => { await api('POST', '/api/me/password', S.pw); S.pw = {}; toast(t('pwChanged')); });
+  if (form === 'pw') run(async () => { await api('POST', '/api/me/password', S.pw); S.pw = {}; toast(t('pwChanged')); if (S.user.mustChange) { S.user.mustChange = false; S.tab = S.user.dept === 'it' ? 'track' : 'inbox'; await refresh(); } });
 });
 function saveProject(sendIt) {
   run(async () => {

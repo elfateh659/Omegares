@@ -1,0 +1,13 @@
+{
+  // إعدادات النشر على Cloudflare Workers — اربط مستودع GitHub من لوحة Cloudflare وسيُنشر تلقائيًا
+  "name": "omegares",
+  "main": "worker.mjs",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./public", "binding": "ASSETS" },
+  "durable_objects": {
+    "bindings": [{ "name": "OMEGA", "class_name": "OmegaStore" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["OmegaStore"] }],
+  "observability": { "enabled": true }
+}
