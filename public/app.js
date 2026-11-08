@@ -648,12 +648,14 @@ function accountView() {
 
 // ---------------- data ----------------
 async function refresh(soft) {
+  // before the default password is changed the server allows only the account page
+  if (S.user && S.user.mustChange) { S.tab = 'account'; render(soft); return; }
   try {
     const [{ projects }, { users }, { stock }, { withdrawals }] = await Promise.all([api('GET', '/api/projects'), api('GET', '/api/users'), api('GET', '/api/stock'), api('GET', '/api/withdrawals')]);
     const inB = x => !S.branch || x.branch === S.branch;
     S.projects = projects.filter(inB); S.users = users; S.stock = stock.filter(inB); S.withdrawals = withdrawals.filter(inB);
-    render(soft);
   } catch {}
+  render(soft);
 }
 function upsert(p) {
   const i = S.projects.findIndex(x => x.id === p.id);
@@ -707,7 +709,7 @@ document.addEventListener('submit', e => {
     api('POST', '/api/login', { username, password }).then(async r => {
       S.user = r.user; S.serverVersion = r.version; S.login = {}; S.as = null; S.tab = r.user.dept === 'it' ? 'track' : 'inbox'; S.sel = null; S.wdSel = null; S.wdFilter = 'act'; S.wdNew = null; S.lblSel = []; S.skQ = ''; S.branch = ''; S.draft = newDraft(); S.uf = { dept: 'tech' };
       await refresh();
-      if (password === 'admin123') toast(t('defaultPw'), true);
+      if (password === 'admin123' && !S.user.mustChange) toast(t('defaultPw'), true);
     }).catch(err => { S.login.err = errMsg(err); S.login.username = username; render(); });
   }
   if (form === 'project') saveProject(true);
