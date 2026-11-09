@@ -67,6 +67,7 @@ const T = {
     err_supplier: 'اكتب اسم المورد', err_price: 'اكتب سعرًا صحيحًا', err_fileType: 'صورة أو PDF فقط', err_net: 'تعذر الاتصال بالخادم',
     tab_wd: 'طلبات الصرف', sk_byProj: 'أصناف المشروعات', sk_general: 'المخزن العام', sk_generalSub: 'كل الأصناف بأرصدتها، والصنف الخاص بمشروع مكتوب بجواره اسم المشروع.',
     br_cairo: 'فرع القاهرة', br_alex: 'فرع الإسكندرية', br_all: 'كل الفروع', branch: 'الفرع', chooseBranch: 'اختر الفرع', branchView: 'الفرع',
+    err_busy: 'الخادم لم يكمل الطلب، حاول مرة أخرى',
     mustChange: 'لحماية النظام: غيّر كلمة المرور الافتراضية الآن. بعد التغيير تظهر كل صفحات النظام.',
     restartWarn: 'السيرفر يعمل بنسخة قديمة. اقفل نافذة السيرفر وشغّل start.bat من جديد حتى تعمل آخر التعديلات.', sk_unitPh: 'مثال: قطعة', sk_unitBad: 'راجع الوحدة', sk_unitHint: 'الوحدة كلمة (قطعة، كرتونة…) والكمية في خانة الرصيد.', sk_edit: 'تعديل',
     sk_generalSubNo: 'قائمة الأصناف الموجودة بالمخزن. الأرصدة تظهر لإدارة المخازن فقط.', sk_code: 'الكود', sk_barcode: 'الباركود', sk_balance: 'الرصيد', sk_gen: 'عام', sk_search: 'ابحث بالاسم أو الكود أو امسح الباركود…', sk_showZero: 'إظهار الأصناف المنتهية',
@@ -150,6 +151,7 @@ const T = {
     err_supplier: 'Enter the supplier name', err_price: 'Enter a valid price', err_fileType: 'Images or PDF only', err_net: 'Could not reach the server',
     tab_wd: 'Withdrawals', sk_byProj: 'Project items', sk_general: 'General stock', sk_generalSub: 'Every item with its balance; project items show the project name.',
     br_cairo: 'Cairo branch', br_alex: 'Alexandria branch', br_all: 'All branches', branch: 'Branch', chooseBranch: 'Choose a branch', branchView: 'Branch',
+    err_busy: 'The server did not finish the request, please try again',
     mustChange: 'To protect the system, change the default password now. All pages appear after you change it.',
     restartWarn: 'The server is running an old version. Close the server window and run start.bat again to apply the latest changes.', sk_unitPh: 'e.g. piece', sk_unitBad: 'Check unit', sk_unitHint: 'The unit is a word (piece, carton…); the quantity goes in the balance field.', sk_edit: 'Edit',
     sk_generalSubNo: 'Items available in stock. Balances are shown to Stores only.', sk_code: 'Code', sk_barcode: 'Barcode', sk_balance: 'Balance', sk_gen: 'General', sk_search: 'Search by name or code, or scan a barcode…', sk_showZero: 'Show depleted items',
@@ -192,7 +194,7 @@ const SERVER_EN = {
 };
 
 // ---------------- state ----------------
-const APP_VERSION = '2026-11-08.6';
+const APP_VERSION = '2026-11-09.1';
 const BRANCHES = ['cairo', 'alex']; // must match server.js
 const DEPTS = ['tech', 'exec', 'purch', 'store', 'acc', 'eng', 'chair', 'it'];
 const STAGES = {
@@ -249,7 +251,7 @@ async function api(method, url, body) {
   } catch { throw new Error(t('err_net')); }
   const j = await r.json().catch(() => ({}));
   if (r.status === 401 && url !== '/api/login' && url !== '/api/me/password') { S.user = null; render(); }
-  if (!r.ok) throw new Error(j.error || t('err_net'));
+  if (!r.ok) throw new Error(j.error || (r.status >= 500 ? t('err_busy') + ' (' + r.status + ')' : t('err_net')));
   return j;
 }
 function readFile(file) {

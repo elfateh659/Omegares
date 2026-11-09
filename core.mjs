@@ -3,31 +3,41 @@
 import crypto from 'node:crypto';
 import { Buffer } from 'node:buffer';
 
-export const APP_VERSION = '2026-11-08.6'; // must match public/app.js
+export const APP_VERSION = '2026-11-09.1'; // must match public/app.js
 const MAX_BODY = 25 * 1024 * 1024; // 25MB (base64 uploads)
 const MAX_FILE = 15 * 1024 * 1024; // 15MB per file
 const BRANCHES = ['cairo', 'alex']; // فرع القاهرة، فرع الإسكندرية
 const USER_BRANCHES = [...BRANCHES, 'all'];
 const DEPTS = ['tech', 'exec', 'purch', 'store', 'acc', 'eng', 'chair', 'it'];
 
-function hashPassword(pw, salt) {
+// Passwords: PBKDF2-SHA256 (fast enough for Cloudflare's 10 ms CPU limit on the free plan).
+// Older accounts hashed with scrypt still verify and are upgraded on their next sign-in.
+const PBKDF2_ITER = 10000;
+function hashPassword(pw, salt, alg = 'pbkdf2') {
   salt = salt || crypto.randomBytes(16).toString('hex');
-  const hash = crypto.scryptSync(String(pw), salt, 64).toString('hex');
-  return { salt, hash };
+  const hash = alg === 'scrypt'
+    ? crypto.scryptSync(String(pw), salt, 64).toString('hex')
+    : crypto.pbkdf2Sync(String(pw), salt, PBKDF2_ITER, 64, 'sha256').toString('hex');
+  return { salt, hash, alg };
 }
 function verifyPassword(pw, user) {
-  const { hash } = hashPassword(pw, user.salt);
-  return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(user.passHash, 'hex'));
+  const { hash } = hashPassword(pw, user.salt, user.hashAlg || 'scrypt');
+  const a = Buffer.from(hash, 'hex'), b = Buffer.from(user.passHash, 'hex');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+function setPassword(user, pw) {
+  const { salt, hash, alg } = hashPassword(pw);
+  user.salt = salt; user.passHash = hash; user.hashAlg = alg;
 }
 const uid = (p = '') => p + crypto.randomBytes(6).toString('hex');
 const now = () => new Date().toISOString();
 
 export function newDatabase() {
-  const { salt, hash } = hashPassword('admin123');
+  const { salt, hash, alg } = hashPassword('admin123');
   return {
     seq: 0,
     users: [{ id: 'u_admin', username: 'admin', name: 'مدير النظام', dept: 'it', branch: 'all', isAdmin: true,
-      salt, passHash: hash, active: true, mustChange: true, createdAt: now() }],
+      salt, passHash: hash, hashAlg: alg, active: true, mustChange: true, createdAt: now() }],
     projects: [], stock: [], withdrawals: [], stockSeq: 0, wseq: 0, sessions: {}
   };
 }
@@ -203,6 +213,7 @@ async function api(req, res, url) {
     if (loginBlocked(key)) return fail(res, 429, 'محاولات دخول خاطئة كثيرة. حاول مرة أخرى بعد 15 دقيقة');
     const u = db.users.find(x => x.username.toLowerCase() === uname);
     if (!u || !u.active || !verifyPassword(b.password || '', u)) { loginFailed(key); return fail(res, 401, 'اسم المستخدم أو كلمة المرور غير صحيحة'); }
+    if ((u.hashAlg || 'scrypt') !== 'pbkdf2') setPassword(u, b.password || ''); // upgrade older hash
     failedLogins.delete(key);
     const sid = crypto.randomBytes(24).toString('hex');
     db.sessions[sid] = { userId: u.id, at: now() };
@@ -224,7 +235,7 @@ async function api(req, res, url) {
     if (!verifyPassword(b.current || '', user)) return fail(res, 400, 'كلمة المرور الحالية غير صحيحة');
     if (String(b.next || '').length < 6) return fail(res, 400, 'كلمة المرور الجديدة 6 أحرف على الأقل');
     if (String(b.next) === String(b.current)) return fail(res, 400, 'اختر كلمة مرور مختلفة عن الحالية');
-    const { salt, hash } = hashPassword(b.next); user.salt = salt; user.passHash = hash; delete user.mustChange; saveDb();
+    setPassword(user, b.next); delete user.mustChange; saveDb();
     return send(res, 200, { ok: true });
   }
 
@@ -240,8 +251,8 @@ async function api(req, res, url) {
     if (!allBranches(user) && b.branch !== user.branch) return fail(res, 403, 'تستطيع إضافة موظفين لفرعك فقط');
     if (String(b.password || '').length < 6) return fail(res, 400, 'كلمة المرور 6 أحرف على الأقل');
     if (db.users.some(x => x.username.toLowerCase() === username.toLowerCase())) return fail(res, 400, 'اسم المستخدم مستخدم من قبل');
-    const { salt, hash } = hashPassword(b.password);
-    const u = { id: uid('u_'), username, name: String(b.name).trim(), dept: b.dept, branch: b.branch, isAdmin: false, salt, passHash: hash, active: true, createdAt: now() };
+    const u = { id: uid('u_'), username, name: String(b.name).trim(), dept: b.dept, branch: b.branch, isAdmin: false, active: true, createdAt: now() };
+    setPassword(u, b.password);
     db.users.push(u); saveDb();
     return send(res, 200, { user: publicUser(u) });
   }
@@ -261,7 +272,7 @@ async function api(req, res, url) {
       if (typeof b.active === 'boolean' && !u.isAdmin) u.active = b.active;
       if (b.password) {
         if (String(b.password).length < 6) return fail(res, 400, 'كلمة المرور 6 أحرف على الأقل');
-        const { salt, hash } = hashPassword(b.password); u.salt = salt; u.passHash = hash;
+        setPassword(u, b.password);
       }
       saveDb(); return send(res, 200, { user: publicUser(u) });
     }
